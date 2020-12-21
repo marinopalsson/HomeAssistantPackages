@@ -1,0 +1,215 @@
+###############################################################################
+#   @author         :   Trent Stanton
+#   @date           :   24/02/2018
+#   @package        :   Washing Machine Notifications
+#   @description    :   Washing Machine monitoring and reminders
+#   @url            :   https://philhawthorne.com/making-dumb-dishwashers-and-washing-machines-smart-alerts-when-the-dishes-and-clothes-are-cleaned/
+###############################################################################
+homeassistant:
+  customize:
+    sensor.washing_machine_status:
+      icon: mdi:washing-machine
+    binary_sensor.tvottavel_hurd_contact:
+      device_class: opening
+
+group:
+  washing_machine:
+    name: "Washing Machine"
+    entities:
+      - sensor.washing_machine_status
+      - switch.plug_washingmachine
+      - sensor.tvottavel_energy_power
+
+input_boolean:
+  disable_washing_machine_notification:
+    name: Disable Washing Machine Notification
+    initial: off
+    icon: mdi:washing-machine
+
+input_select:
+  washing_machine_status:
+    name: Washing Machine Status
+    options:
+      - Tóm
+      - Að þvo
+      - Að klára
+      - Búin
+    initial: Tóm
+
+sensor:
+  - platform: template
+    sensors:
+      # Washing Machine Status
+      washing_machine_status:
+        value_template: "{{ states.input_select.washing_machine_status.state}}"
+        friendly_name: "Washing Machine Status"
+
+###############################################################################
+#                               Automations
+###############################################################################
+automation:
+  ############################################################
+  #
+  # Washing Machine Control
+  #
+  ############################################################
+
+  # When power is detected, and the washing machine is not in
+  # the Running state, change the status of the washing machine
+  # to Running.
+  # The status check will ensure we don't try to put the state
+  # to Running each time the power level changes, and we're already
+  # in the Running state.
+
+  - alias: Set washing machine active when power detected
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.tvottavel_energy_power
+        above: 10
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: sensor.washing_machine_status
+          state: Tóm
+        - condition: state
+          entity_id: sensor.washing_machine_status
+          state: Búin
+        - condition: state
+          entity_id: sensor.washing_machine_status
+          state: Að klára
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.washing_machine_status
+          option: Að þvo
+
+  # When the power drops, move the state of the washing machine to
+  # Finishing.
+
+  - alias: Set washing machine finished when power drops
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.tvottavel_energy_power
+        below: 3
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_select.washing_machine_status
+          state: Að þvo
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.washing_machine_status
+          option: Að klára
+
+  # Wait 1 minutes for us to be in the Finishing state before we
+  # decide the washing machine has finished. This way, if the
+  # washing machine is in between cycles and the power drops, we
+  # won't mark the washing machine cycle as finished too early.
+
+  - alias: Set washing machine clean after timeout
+    trigger:
+      - platform: state
+        entity_id: input_select.washing_machine_status
+        to: Að klára
+        for:
+          minutes: 1
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_select.washing_machine_status
+          state: Að klára
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.washing_machine_status
+          option: Búin
+
+  # When we open the washing machine door, reset the status back to
+  # idle, so we don't spam people that the washing machine has
+  # finished, and someone has already emptied it
+
+  - alias: Set washing machine dirty when door opens
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.tvottavel_hurd_contact
+        to: "on"
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: input_select.washing_machine_status
+          state: Búin
+        - condition: state
+          entity_id: input_select.washing_machine_status
+          state: Að klára
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.washing_machine_status
+          option: Tóm
+  # Washing Machine Alerts
+  - alias: Send alert when washing machine is finished
+    trigger:
+      - platform: state
+        entity_id: sensor.washing_machine_status
+        to: Búin
+        for:
+          minutes: 1
+      - platform: state
+        entity_id: person.marino
+        to: "home"
+        for:
+          minutes: 2
+      - platform: state
+        entity_id: person.ragna
+        to: "home"
+        for:
+          minutes: 2
+      - platform: time
+        at: "08:45:00"
+    condition:
+      condition: and
+      conditions:
+        - condition: time
+          before: "23:00:00"
+          after: "08:30:00"
+        - condition: state
+          entity_id: group.homemembers
+          state: "home"
+        - condition: state
+          entity_id: input_select.washing_machine_status
+          state: Búin
+        - condition: state
+          entity_id: input_boolean.disable_washing_machine_notification
+          state: "off"
+        - condition: template
+          value_template: >
+            {% if states.automation.send_alert_when_washing_machine_is_finished.last_triggered is not none %}
+              {% if as_timestamp(now()) | int   -  as_timestamp(states.automation.send_alert_when_washing_machine_is_finished.attributes.last_triggered) | int > 1800 %} true {% else %} false
+              {% endif %}
+            {% else %}
+            false
+            {% endif %}
+    action:
+      - service: tts.google_translate_say
+        entity_id: media_player.living_room_speaker
+        data_template:
+          message: >
+            {% if (is_state('person.marino', 'home')) or (is_state('person.ragna', 'home'))  %}
+              Attention!: the washing machine has finished and is ready to be emptied.
+            {% endif %}
+      - service: >
+          {% if (is_state('person.marino', 'home')) and (is_state('person.ragna', 'home'))  %}
+            notify.marino_og_ragna
+          {% elif is_state('person.marino', 'home') %}
+            notify.mobile_app_sm_g965f
+          {% elif is_state('person.ragna', 'home') %}
+            notify.mobile_app_in2013
+          {% endif %}
+        data:
+          message: "Hey, the washing machine has finished and is ready to be emptied"
+          title: "Washing Machine"

@@ -1,0 +1,40 @@
+input_number:
+  kronur_a_kwh:
+    min: 0
+    max: 100
+    name: Krónur á kílóvattstund
+    # Verð á rafmagni, 8.1 krónur/kWh skv ON 6.12.20
+    initial: 8.1
+    unit_of_measurement: krónur
+
+sensor:
+  - platform: rest
+    # Nær í ný gögn á shelly á 5 mínútna fresti. Mögulega betra að skoða mqtt integration?
+    name: rafmagn_i_kwh
+    resource: http://192.168.1.20/status
+    value_template: "{{ value_json.emeters.0.total | float /1000 | round(2) }}"
+    scan_interval: 300 # Shelly uppfærist á 5 mínútna fresti svo þetta er nóg
+    unit_of_measurement: kWh
+
+  - platform: template
+    sensors:
+      # Margfaldar notkun dagsins (kílóvött) með verði á kílóvattsstund
+      rafmagn_per_dag_kronur:
+        friendly_name: Rafmagnskostnaður í dag
+        unit_of_measurement: krónur
+        value_template: "{{ (states('sensor.rafmagn_per_dag')|float * (states('input_number.kronur_a_kwh'))|float) | round(2)}}"
+
+      # Margfaldar notkun mánaðarins (kílóvött) með verði á kílóvattsstund
+      rafmagn_per_manud_kronur:
+        friendly_name: Rafmagnskostnaður þennan mánuð
+        unit_of_measurement: krónur
+        value_template: "{{ (states('sensor.rafmagn_per_manud')|float * (states('input_number.kronur_a_kwh'))|float) | round(2)}}"
+
+# Eiginleiki í HA sem leggur saman notkunina
+utility_meter:
+  rafmagn_per_dag:
+    source: sensor.rafmagn_i_kwh
+    cycle: daily
+  rafmagn_per_manud:
+    source: sensor.rafmagn_i_kwh
+    cycle: monthly

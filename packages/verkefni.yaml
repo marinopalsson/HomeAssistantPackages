@@ -1,0 +1,216 @@
+input_number:
+  alm_chores_days:
+    name: Ágústa dagar
+    min: 0
+    max: 365
+    step: 1
+    unit_of_measurement: dagar
+    icon: mdi:calendar-month
+  blm_chores_days:
+    name: Birgitta dagar
+    min: 0
+    max: 365
+    step: 1
+    unit_of_measurement: dagar
+    icon: mdi:calendar-month
+
+input_boolean:
+  #morning
+  task_alm_brush_teeth_morning:
+    name: Bursta tennur
+    icon: mdi:emoticon
+  task_blm_brush_teeth_morning:
+    name: Bursta tennur
+    icon: mdi:emoticon
+  task_alm_get_dressed:
+    name: Klæða sig
+    icon: mdi:human
+  task_blm_get_dressed:
+    name: Klæða sig
+    icon: mdi:human
+  task_alm_take_medicine:
+    name: Taka meðal
+    icon: mdi:pill
+  task_blm_take_medicine:
+    name: Taka meðal
+    icon: mdi:pill
+  task_alm_take_vitamins:
+    name: Taka vítamín
+    icon: mdi:arm-flex
+  task_blm_take_vitamins:
+    name: Taka vítamín
+    icon: mdi:arm-flex
+  task_alm_eat_breakfast:
+    name: Borða morgunmat
+    icon: mdi:food-variant
+  task_blm_eat_breakfast:
+    name: Borða morgunmat
+    icon: mdi:food-variant
+  task_alm_comb_hair:
+    name: Greiða hár
+    icon: mdi:hair-dryer
+  task_blm_comb_hair:
+    name: Greiða hár
+    icon: mdi:hair-dryer
+
+  #during day
+  task_alm_study:
+    name: Læra
+    icon: mdi:clipboard-text-outline
+  task_blm_study:
+    name: Læra
+    icon: mdi:clipboard-text-outline
+  chore_alm_do_dishes:
+    name: Taka úr uppþvottavél
+    icon: mdi:dishwasher
+  chore_blm_do_dishes:
+    name: Taka úr uppþvottavél
+    icon: mdi:dishwasher
+  chore_alm_throw_garbage:
+    name: Henda rusli
+    icon: mdi:trash-can
+  chore_blm_throw_garbage:
+    name: Henda rusli
+    icon: mdi:trash-can
+  chore_alm_tidy_room:
+    name: Taka til í herbergi
+    icon: mdi:broom
+  chore_blm_tidy_room:
+    name: Taka til í herbergi
+    icon: mdi:broom
+  chore_alm_wipe:
+    name: Þurrka af
+    icon: mdi:broom
+  chore_blm_wipe:
+    name: Þurrka af
+    icon: mdi:broom
+  chore_alm_staircase:
+    name: Taka úr stiganum
+    icon: mdi:stairs
+  chore_blm_staircase:
+    name: Taka úr stiganum
+    icon: mdi:stairs
+  chore_alm_tidy_table:
+    name: Taka af borðstofuborðinu
+    icon: mdi:table-chair
+  chore_blm_tidy_table:
+    name: Taka af borðstofuborðinu
+    icon: mdi:table-chair
+
+  #before bed
+  task_alm_get_clothes_ready:
+    name: Taka til föt
+    icon: mdi:hanger
+  task_blm_get_clothes_ready:
+    name: Taka til föt
+    icon: mdi:hanger
+  task_alm_brush_teeth_evening:
+    name: Bursta - kvöld
+    icon: mdi:emoticon
+  task_blm_brush_teeth_evening:
+    name: Bursta - kvöld
+    icon: mdi:emoticon
+
+sensor:
+  - platform: template
+    sensors:
+      alm_chore_days_int:
+        unit_of_measurement: "dagar"
+        value_template: "{{ states('input_number.alm_chores_days')|int }}"
+      blm_chore_days_int:
+        unit_of_measurement: "dagar"
+        value_template: "{{ states('input_number.blm_chores_days')|int }}"
+
+automation:
+  - id: run_check_chores
+    alias: Run Check Chores
+    trigger:
+      platform: time
+      at: '23:00:00'
+    action:
+      service: script.check_chores
+  - id: alm_is_finished
+    alias: Agusta finished
+    trigger:
+      platform: state
+      entity_id: group.chores_alm
+      from: 'on'
+      to: 'off'
+    action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.living_room_speaker
+        volume_level: 0.4
+    - service: tts.google_translate_say
+      entity_id: media_player.living_room_speaker
+      data:
+        message: Agusta er buin med verkefnin, JEIJ!
+        language: is
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.bathroom_speaker
+        volume_level: 0.4
+    - service: tts.google_translate_say
+      entity_id: media_player.bathroom_speaker
+      data:
+        message: Agusta er buin med verkefnin, JEIJ!
+        language: is
+  - id: blm_is_finished
+    alias: Birgitta finished
+    trigger:
+      platform: state
+      entity_id: group.chores_blm
+      from: 'on'
+      to: 'off'
+    action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.living_room_speaker
+        volume_level: 0.4
+    - service: tts.google_translate_say
+      entity_id: media_player.living_room_speaker
+      data:
+        message: Birgitta er buin med verkefnin, JEIJ!
+        language: is
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.bathroom_speaker
+        volume_level: 0.4
+    - service: tts.google_translate_say
+      entity_id: media_player.bathroom_speaker
+      data:
+        message: Birgitta er buin med verkefnin, JEIJ!
+        language: is
+
+script:
+  check_chores:
+    alias: Checking kids chores
+    sequence:
+      - service: script.is_alm_done
+      - service: script.is_blm_done
+  is_alm_done:
+    alias: Has ALM finished her chores?
+    sequence:
+      - condition: template
+        value_template: >
+          {{ states|selectattr('entity_id','in',state_attr('group.chores_alm','entity_id'))|selectattr('state','eq','on')|list|count <= 1 }}
+      - service: input_number.set_value
+        data_template:
+          entity_id: input_number.alm_chores_days
+          value: '{{ (states.input_number.alm_chores_days.state | int ) + 1 | int}}'
+      - service: notify.mobile_app_marino_s9 
+        data:
+          message: Agusta finished her chores
+  is_blm_done:
+    alias: Has BLM finished her chores?
+    sequence:
+      - condition: template
+        value_template: >
+          {{ states|selectattr('entity_id','in',state_attr('group.chores_blm','entity_id'))|selectattr('state','eq','on')|list|count <= 1 }}
+      - service: input_number.set_value
+        data_template:
+          entity_id: input_number.blm_chores_days
+          value: '{{ (states.input_number.blm_chores_days.state | int ) + 1 | int}}'
+      - service: notify.mobile_app_marino_s9 
+        data:
+          message: Birgitta finished her chores

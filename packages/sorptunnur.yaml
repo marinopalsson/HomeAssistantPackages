@@ -1,0 +1,72 @@
+## Template kóðinn fenginn hjá Þorsteini Ólafssyni ##
+## Hér búum við til sensor með auðskiljanlegum texta sem segir hvenær tunnurnar verða tæmdar ##
+## Þetta stólar á að búið sé að græja calendar integration (https://www.home-assistant.io/integrations/calendar.google/)
+## og setja inn dagsetningar fyrir sorphirðuna.
+
+sensor:
+  - platform: template
+    sensors:
+      gra_tunna:
+        friendly_name: Gráa tunnan
+        value_template: >-
+          {% set pickupday = strptime(states.calendar.sorp_gratunna.attributes.start_time, "%Y-%m-%d %H:%M:%S").strftime("%w") %}
+          {% set pickupday2 = strptime(states.calendar.sorp_gratunna.attributes.start_time, "%Y-%m-%d %H:%M:%S").strftime("%d. %b %Y") %}
+          {% if states('sensor.date') and as_timestamp(states.calendar.sorp_gratunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 == 0.0 %}
+            Í dag
+          {% elif as_timestamp(states.calendar.sorp_gratunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 == -1.0 %}
+            Í dag
+          {% elif as_timestamp(states.calendar.sorp_gratunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 == 1.0 %}
+            Á morgun
+          {% elif as_timestamp(states.calendar.sorp_gratunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 >= 7.0 %}
+            Eftir {{(as_timestamp(states.calendar.sorp_gratunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 )| round(0)}} daga
+          {% elif as_timestamp(states.calendar.sorp_gratunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 >= 2.0 %}
+            Á {{ {"0": "sunnudaginn", "1": "mánudaginn", "2": "þriðjudaginn", "3": "miðvikudaginn", "4": "fimmtudaginn", "5": "föstudaginn", "6": "laugardaginn"}[pickupday] | default("") }}
+          {% else %}
+            Þarf að uppfæra dagatal ¯\_()_/¯
+          {% endif %}
+      bla_tunna:
+        friendly_name: Bláa tunnan
+        value_template: >-
+          {% set pickupday = strptime(states.calendar.sorp_blatunna.attributes.start_time, "%Y-%m-%d %H:%M:%S").strftime("%w") %}
+          {% set pickupday2 = strptime(states.calendar.sorp_blatunna.attributes.start_time, "%Y-%m-%d %H:%M:%S").strftime("%d. %b %Y") %}
+          {% if states('sensor.date') and as_timestamp(states.calendar.sorp_blatunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 == 0.0 %}
+            Í dag
+          {% elif as_timestamp(states.calendar.sorp_blatunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 == -1.0 %}
+            Í dag
+          {% elif as_timestamp(states.calendar.sorp_blatunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 == 1.0 %}
+            Á morgun
+          {% elif as_timestamp(states.calendar.sorp_blatunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 >= 7.0 %}
+            Eftir {{(as_timestamp(states.calendar.sorp_blatunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 )| round(0)}} daga
+          {% elif as_timestamp(states.calendar.sorp_gratunna.attributes.start_time) / 86400 - as_timestamp(as_timestamp(now()) | timestamp_custom("%Y-%m-%d 00:00:00",true)) / 86400 >= 2.0 %}
+            Á {{ {"0": "sunnudaginn", "1": "mánudaginn", "2": "þriðjudaginn", "3": "miðvikudaginn", "4": "fimmtudaginn", "5": "föstudaginn", "6": "laugardaginn"}[pickupday] | default("") }}
+          {% else %}
+            Þarf að uppfæra dagatal ¯\_()_/¯
+          {% endif %}
+
+#tilkynningarnar virka ekki - þarf að skoða þetta betur
+automation:
+  - alias: skilabod um grau ruslatunnuna
+    trigger:
+      platform: time
+      at: "08:45:00"
+    condition:
+      condition: template
+      value_template: "{{ state_attr('calendar.sorp_gratunna', 'start_time') == (as_timestamp(utcnow().day) + (86400)) }}"
+    action:
+      - service: notify.marino_og_ragna
+        data:
+          message: "Gráa ruslatunnan verður tæmd á morgun"
+          title: "Gráa ruslatunnan"
+
+  - alias: skilabod um blau ruslatunnuna
+    trigger:
+      platform: time
+      at: "08:45:00"
+    condition:
+      condition: template
+      value_template: "{{ state_attr('calendar.sorp_blatunna', 'start_time') == (as_timestamp(utcnow().day) + (86400)) }}"
+    action:
+      - service: notify.marino_og_ragna
+        data:
+          message: "Bláa ruslatunnan verður tæmd á morgun"
+          title: "Bláa ruslatunnan"
