@@ -43,7 +43,6 @@ sensor:
             Þarf að uppfæra dagatal ¯\_()_/¯
           {% endif %}
 
-#tilkynningarnar virka ekki - þarf að skoða þetta betur
 automation:
   - alias: skilabod um grau ruslatunnuna
     trigger:
@@ -51,7 +50,7 @@ automation:
       at: "08:45:00"
     condition:
       condition: template
-      value_template: "{{ state_attr('calendar.sorp_gratunna', 'start_time') == (as_timestamp(utcnow().day) + (86400)) }}"
+      value_template: "{{ state_attr('calendar.gratunna', 'start_time') | as_timestamp == (now().date() | as_timestamp + 86400) }}"
     action:
       - service: notify.marino_og_ragna
         data:
@@ -64,7 +63,7 @@ automation:
       at: "08:45:00"
     condition:
       condition: template
-      value_template: "{{ state_attr('calendar.sorp_blatunna', 'start_time') == (as_timestamp(utcnow().day) + (86400)) }}"
+      value_template: "{{ state_attr('calendar.sorp_blatunna', 'start_time') | as_timestamp == (now().date() | as_timestamp + 86400) }}"
     action:
       - service: notify.marino_og_ragna
         data:
