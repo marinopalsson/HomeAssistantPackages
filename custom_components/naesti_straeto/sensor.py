@@ -7,7 +7,7 @@ from .api import fetch_busstop_data, get_stop_name
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "naesti_straeto"
-SCAN_INTERVAL = timedelta(minutes=1)
+SCAN_INTERVAL = timedelta(seconds=30)
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     busstop_id = config["busstop_id"]
@@ -78,6 +78,8 @@ class BusstopSensor(Entity):
                 arrival_time = datetime.strptime(next_bus["koma"], "%H:%M")
                 now = datetime.now()
                 time_difference = (datetime.combine(datetime.today(), arrival_time.time()) - datetime.combine(datetime.today(), now.time())).seconds
+                if time_difference > (960 * 60): # If the bus is late, the comparison is between the late bus and the arrival time next day
+                    time_difference = 0
                 self._state = int(time_difference / 60)
                 self._attributes = next_bus
             else:

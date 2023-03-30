@@ -1,10 +1,13 @@
-Til að setja upp NÆSTI STRÆTÓ þarf að gera tvennt:
+# Næsti strætó
 
-1. Kópera skrárnar á réttan stað, Þær þurfa að fara undir custom_components/naesti_straeto í config möppunni.
-2. Endurræsa Home Assistant
-3. Setja upp sensor fyrir hvern strætó sem fylgjast skal með í configuration.yaml (eða þar sem þið eruð með ykkar sensors).
-4. Endurræsa Home Assistant
-5. Setja skynjarana upp í Lovelace og njóta
+Til að setja upp _**Næsti strætó**_ þarf að gera þrennt. Ég mæli með að endurræsa eftir skref 1 og 2:
+
+1. Koma skránum fyrir á réttan stað. Hér er annað hvort hægt að: 
+   * Afrita skrárnar á réttan stað. þær þurfa að fara undir custom_components/naesti_straeto í config möppunni.
+   * Ef þú ert með HACS installað, þá er hægt að fara í það og setja inn **Custom repository**. Setja `https://github.com/marinopalsson/HomeAssistantPackages/tree/main/custom_components/naesti_straeto` í _Repository_ reitinn og Integration i _Category_
+2. Setja upp sensor fyrir hvern strætó sem fylgjast skal með í configuration.yaml (eða þar sem þið eruð með ykkar sensors).
+3. Setja skynjarana upp í Lovelace og njóta
+
 
 ---
 ## Staðsetning skráanna
@@ -31,15 +34,16 @@ sensor:
     stop_data_file_path: "custom_components/naesti_straeto/stops.json"
 ```
 
-Þarna þarf að skipta út busstop_id og bus_line
+Þarna þarf að skipta út **busstop_id** og **bus_line**
 
-busstop_id:
+Númer strætósins fer í _**bus_line**_
 
 Í stops.json skránni er hægt að finna lista yfir allar stoppistöðvar. Þar þarf að finna þá stoppistöð sem fylgjast skal með og er _**stop_id**_ gildið sem setja skal í _**busstop_id**_
 
-bus_line:
-
-Númer strætósins sem fylgjast skal með.
+Í flestum tilfellum eru tvær stoppistöðvar með sama nafn, því þær eru sitthvoru megin við götuna. Til að finna út hvor þeirra er sú sem þú ert að leita að er hægt að setja inn gps hnitin í google maps, eða fara á þessa slóð:</br>
+`https://data01.straeto.is/data/dyn-data/s/90000175.json`
+</br>
+skipta út 90000175 fyrir stop_id á stöðinni sem þú ert að skoða. Finna strætónúmerið sem þú hefur áhuga á og skoða "til" reitinn fyrir þann strætó.
 
 ---
 ## Lovelace
@@ -50,4 +54,4 @@ entities:
   - entity: sensor.straeto_15_16040613
     name: Strætó 15
 ```
-þar sem ykkar sensor væri `sensor.straeto_{bus_line}_{busstop_id}`
+þar sem þinn sensor væri `sensor.straeto_{bus_line}_{busstop_id}`
