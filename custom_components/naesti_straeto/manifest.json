@@ -1,0 +1,9 @@
+{
+    "domain": "naesti_straeto",
+    "name": "Next Bus Sensor",
+    "documentation": "",
+    "dependencies": [],
+    "codeowners": [],
+    "requirements": [],
+    "version": "0.1.0" 
+}
