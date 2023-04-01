@@ -40,7 +40,10 @@ Númer strætósins fer í _**bus_line**_
 
 Í stops.json skránni er hægt að finna lista yfir allar stoppistöðvar. Þar þarf að finna þá stoppistöð sem fylgjast skal með og er _**stop_id**_ gildið sem setja skal í _**busstop_id**_
 
-Í flestum tilfellum eru tvær stoppistöðvar með sama nafn, því þær eru sitthvoru megin við götuna. Til að finna út hvor þeirra er sú sem þú ert að leita að er hægt að setja inn gps hnitin í google maps, eða fara á þessa slóð:</br>
+Í flestum tilfellum eru tvær stoppistöðvar með sama nafn, því þær eru sitthvoru megin við götuna. Hægt er að fletta upp stoppistöðvunum hér og fá busstop_id hér:
+[Strætó stoppistöðvar](https://straeto-busstop.vercel.app/)
+
+Ef vefsíðan virkar ekki þá er hægt að fara á þessa slóð:</br>
 `https://data01.straeto.is/data/dyn-data/s/90000175.json`
 </br>
 skipta út 90000175 fyrir stop_id á stöðinni sem þú ert að skoða. Finna strætónúmerið sem þú hefur áhuga á og skoða "til" reitinn fyrir þann strætó.
