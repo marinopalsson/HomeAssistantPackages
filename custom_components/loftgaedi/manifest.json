@@ -1,0 +1,10 @@
+{
+    "domain": "loftgaedi",
+    "name": "Loftgæði",
+    "documentation": "https://github.com/marinopalsson/HomeAssistantPackages/tree/main/custom_components/loftgaedi",
+    "dependencies": [],
+    "codeowners": ["@marinopalsson"],
+    "requirements": ["requests"],
+    "version": "0.1.0",
+    "homeassistant": "2021.6.0"
+}
